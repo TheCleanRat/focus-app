@@ -23,12 +23,13 @@ const DISTRACTION_KEYWORDS = ['youtube', 'instagram'];
 let lastDistraction = 0;
 let lastDistractionTabId = null;
 let distractionWindowRef = null;
+let freezeInterval = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 400,
     height: 300,
-    alwaysOnTop: true, // Make the window stay above all others
+    alwaysOnTop: true,
     skipTaskbar: false,
     frame: true,
     webPreferences: {
@@ -40,10 +41,12 @@ function createWindow() {
 }
 
 function createDistractionWindow() {
+  // If window already exists, just focus it
   if (distractionWindowRef && !distractionWindowRef.isDestroyed()) {
     distractionWindowRef.focus();
     return distractionWindowRef;
   }
+
   distractionWindowRef = new BrowserWindow({
     width: 400,
     height: 300,
@@ -52,10 +55,20 @@ function createDistractionWindow() {
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
-  distractionWindowRef.on('closed', () => { distractionWindowRef = null; });
+
+  // Clean up reference when window is closed
+  distractionWindowRef.on('closed', () => { 
+    distractionWindowRef = null; 
+    if (freezeInterval) {
+      clearInterval(freezeInterval);
+      freezeInterval = null;
+    }
+  });
+
   distractionWindowRef.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
     <!DOCTYPE html>
     <html lang='en'>
@@ -63,11 +76,32 @@ function createDistractionWindow() {
       <meta charset='UTF-8'>
       <title>Stay Focused!</title>
       <style>
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f7f7fa; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        body { 
+          font-family: 'Inter', 'Segoe UI', sans-serif; 
+          background: #f7f7fa; 
+          margin: 0; 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: center; 
+          height: 100vh; 
+        }
         h2 { color: #6a4cff; margin-bottom: 0.5em; font-size: 2rem; }
         p { color: #444; font-size: 1.1rem; margin-bottom: 1.5em; text-align: center; }
-        button { margin-top: 1.5rem; padding: 0.7rem 2.2rem; border: none; border-radius: 8px; background: linear-gradient(90deg, #6a4cff 0%, #b86bff 100%); color: #fff; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        button { 
+          margin-top: 1.5rem; 
+          padding: 0.7rem 2.2rem; 
+          border: none; 
+          border-radius: 8px; 
+          background: linear-gradient(90deg, #6a4cff 0%, #b86bff 100%); 
+          color: #fff; 
+          font-size: 1.1rem; 
+          font-weight: 600; 
+          cursor: pointer; 
+          transition: all 0.2s;
+        }
         button:hover { background: linear-gradient(90deg, #b86bff 0%, #6a4cff 100%); }
+        button:active { transform: scale(0.98); }
       </style>
     </head>
     <body>
@@ -75,68 +109,134 @@ function createDistractionWindow() {
       <p>Oops! You might be getting distracted.<br>Close those tabs or apps (YouTube, Instagram, etc.) and get back on track!</p>
       <button id='close-btn'>I'm back!</button>
       <script>
-        window.addEventListener('DOMContentLoaded', () => {
-          try {
-            let freezeInterval = null;
-            
-            // Log any errors that occur
-            window.onerror = (msg, url, line, col, error) => {
-              console.error('Error:', { msg, url, line, col, error });
-            };
-            
-            document.getElementById('close-btn').addEventListener('click', () => {
+        let freezeInterval = null;
+        
+        function initializeWindow() {
+          const closeBtn = document.getElementById('close-btn');
+          
+          if (closeBtn && window.electronAPI) {
+            closeBtn.addEventListener('click', () => {
               try {
+                // Clear any freeze intervals first
+                if (freezeInterval) {
+                  clearInterval(freezeInterval);
+                  freezeInterval = null;
+                }
+                
+                // Send the close message
                 window.electronAPI.sendMessage('close-distraction-tab');
-                console.log('Sent close-distraction-tab message');
+                
+                // Disable the button to prevent multiple clicks
+                closeBtn.disabled = true;
+                closeBtn.textContent = 'Closing...';
+                
+                console.log('Close message sent successfully');
               } catch (e) {
                 console.error('Error sending close message:', e);
               }
             });
 
+            // Start the freeze interval
             freezeInterval = setInterval(() => {
               try {
-                window.electronAPI.sendMessage('freeze-distraction-tab');
+                if (window.electronAPI) {
+                  window.electronAPI.sendMessage('freeze-distraction-tab');
+                }
               } catch (e) {
                 console.error('Error sending freeze message:', e);
-                clearInterval(freezeInterval);
+                if (freezeInterval) {
+                  clearInterval(freezeInterval);
+                  freezeInterval = null;
+                }
               }
-            }, 1000);
+            }, 2000); // Reduced frequency to every 2 seconds
 
-            window.addEventListener('beforeunload', () => {
-              if (freezeInterval) {
-                clearInterval(freezeInterval);
-              }
-            });
+            console.log('Distraction window initialized successfully');
+          } else {
+            console.error('Missing elements or electronAPI not available');
+          }
+        }
 
-            console.log('Distraction window script initialized');
-          } catch (e) {
-            console.error('Error in window initialization:', e);
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initializeWindow);
+        } else {
+          initializeWindow();
+        }
+
+        // Clean up on window unload
+        window.addEventListener('beforeunload', () => {
+          if (freezeInterval) {
+            clearInterval(freezeInterval);
+            freezeInterval = null;
           }
         });
+
+        // Error handling
+        window.onerror = (msg, url, line, col, error) => {
+          console.error('Window error:', { msg, url, line, col, error });
+        };
       </script>
     </body>
     </html>
   `)}`);
   
-  // Add logging for window events
   distractionWindowRef.webContents.on('did-finish-load', () => {
-    log('INFO', 'Distraction window loaded');
+    log('INFO', 'Distraction window loaded successfully');
   });
   
-  distractionWindowRef.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    log('RENDERER', message, { level, line, sourceId });
+  distractionWindowRef.webContents.on('console-message', (event, level, message) => {
+    log('RENDERER', message, { level });
   });
   
   return distractionWindowRef;
 }
 
+function closeDistractionWindow() {
+  log('INFO', 'Attempting to close distraction window');
+  
+  // Clear freeze interval first
+  if (freezeInterval) {
+    clearInterval(freezeInterval);
+    freezeInterval = null;
+    log('INFO', 'Cleared freeze interval');
+  }
+
+  // Close the window
+  if (distractionWindowRef && !distractionWindowRef.isDestroyed()) {
+    try {
+      distractionWindowRef.close();
+      log('INFO', 'Distraction window close initiated');
+      
+      // Force cleanup after a short delay if needed
+      setTimeout(() => {
+        if (distractionWindowRef && !distractionWindowRef.isDestroyed()) {
+          try {
+            distractionWindowRef.destroy();
+            log('INFO', 'Force destroyed distraction window');
+          } catch (e) {
+            log('ERROR', 'Error force destroying window:', e);
+          }
+        }
+        distractionWindowRef = null;
+      }, 500);
+      
+    } catch (e) {
+      log('ERROR', 'Error closing distraction window:', e);
+      distractionWindowRef = null;
+    }
+  } else {
+    log('INFO', 'No distraction window to close');
+    distractionWindowRef = null;
+  }
+}
+
 function promptExtensionInstall() {
   const extensionPath = `${__dirname}/extension`;
-  // Use a short delay to ensure the window is ready
   setTimeout(() => {
-    shell.openPath(extensionPath); // Open the extension folder in Finder
+    shell.openPath(extensionPath);
     mainWindow.webContents.executeJavaScript(`
-      alert('For best results, please install the FocusTracker browser extension.\n\n1. Open Chrome and go to chrome://extensions/\n2. Enable Developer Mode (top right)\n3. Drag and drop the extension folder (which just opened) into the page.');
+      alert('For best results, please install the FocusTracker browser extension.\\n\\n1. Open Chrome and go to chrome://extensions/\\n2. Enable Developer Mode (top right)\\n3. Drag and drop the extension folder (which just opened) into the page.');
     `);
   }, 500);
 }
@@ -157,26 +257,34 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// Real distraction detection using get-windows (ESM import)
+// Real distraction detection using get-windows (reduced frequency)
 setInterval(async () => {
   try {
     const getWindows = (await import('get-windows')).default;
     const windows = await getWindows();
     const active = windows.find(w => w.isFocused);
     if (!active) return;
-    console.log('Active window info:', active); // Debug log
+    
     const title = (active.title || '').toLowerCase();
     const appName = (active.app || '').toLowerCase();
-    const isDistracted = DISTRACTION_KEYWORDS.some(keyword => title.includes(keyword) || appName.includes(keyword));
+    const isDistracted = DISTRACTION_KEYWORDS.some(keyword => 
+      title.includes(keyword) || appName.includes(keyword)
+    );
+    
     if (isDistracted && Date.now() - lastDistraction > 30000) {
       lastDistraction = Date.now();
+      log('INFO', 'Distraction detected:', { title: active.title, app: active.app });
       createDistractionWindow();
     }
   } catch (e) {
-    // Ignore errors
+    // Ignore errors but log them occasionally
+    if (Math.random() < 0.01) { // Log 1% of errors to avoid spam
+      log('ERROR', 'Error in distraction detection:', e);
+    }
   }
-}, 4000);
+}, 5000); // Increased interval to 5 seconds
 
+// IPC Event Handlers
 ipcMain.on('remind-again', () => {
   log('IPC', 'Received remind-again message');
   setTimeout(() => {
@@ -185,54 +293,21 @@ ipcMain.on('remind-again', () => {
 });
 
 ipcMain.on('freeze-distraction-tab', () => {
-  log('IPC', 'Received freeze-distraction-tab message', { tabId: lastDistractionTabId });
   if (lastDistractionTabId) {
-    sendCloseTab(lastDistractionTabId, true); // true = freeze only, don't close
-  } else {
-    log('WARN', 'No tab ID available for freezing');
+    sendCloseTab(lastDistractionTabId, true); // freeze only
   }
 });
 
 ipcMain.on('close-distraction-tab', () => {
-  const tabToClose = lastDistractionTabId; // Store the ID locally
+  const tabToClose = lastDistractionTabId;
   log('IPC', 'Received close-distraction-tab message', { tabId: tabToClose });
   
-  // Immediately close the window
-  if (distractionWindowRef && !distractionWindowRef.isDestroyed()) {
-    try {
-      log('INFO', 'Attempting to close distraction window');
-      distractionWindowRef.destroy();
-      log('INFO', 'Successfully destroyed distraction window');
-    } catch (e) {
-      log('WARN', 'Error destroying window, attempting force close', e);
-      try {
-        distractionWindowRef.close();
-        log('INFO', 'Successfully force closed distraction window');
-      } catch (e2) {
-        log('ERROR', 'Failed to force close window', e2);
-      }
-    }
-    distractionWindowRef = null;
-  } else {
-    log('WARN', 'No distraction window to close or already destroyed');
-  }
-
-  // Send close command immediately if we have a tab ID
+  // Close the distraction window immediately
+  closeDistractionWindow();
+  
+  // Send close command to browser extension if we have a tab ID
   if (tabToClose) {
-    // Send close command multiple times to ensure delivery
     sendCloseTab(tabToClose, false);
-    
-    // Clear the ID after sending the command
     lastDistractionTabId = null;
-    
-    // Set a short timeout to verify the window is really gone
-    setTimeout(() => {
-      if (distractionWindowRef && !distractionWindowRef.isDestroyed()) {
-        try {
-          distractionWindowRef.destroy();
-          distractionWindowRef = null;
-        } catch (e) {}
-      }
-    }, 100);
   }
 });
