@@ -1,0 +1,21 @@
+{
+  "name": "focustracker",
+  "version": "1.0.0",
+  "description": "Electron app to help users stay focused by monitoring distractions.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-rebuild": "^3.2.9",
+    "get-windows": "^9.2.3"
+  },
+  "dependencies": {
+    "active-win": "^9.0.0",
+    "ws": "^8.18.3"
+  }
+}
