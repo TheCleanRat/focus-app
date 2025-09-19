@@ -39,8 +39,143 @@
     .subtitle {
       color: #7a7a9a;
       font-size: 1.1rem;
-      margin-bottom: 2.5em;
+      margin-bottom: 1.5em;
+      text-align: center;
+      max-width: 450px;
     }
+    
+    .homework-status {
+      background: white;
+      border-radius: 16px;
+      padding: 20px 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+      min-width: 400px;
+      text-align: center;
+    }
+    
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .status-icon {
+      font-size: 2rem;
+    }
+    
+    .status-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    
+    .status-complete {
+      color: #10b981;
+    }
+    
+    .status-incomplete {
+      color: #f59e0b;
+    }
+    
+    .status-details {
+      color: #7a7a9a;
+      margin-bottom: 15px;
+    }
+    
+    .status-progress {
+      background: #f3f4f6;
+      border-radius: 10px;
+      height: 8px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    
+    .status-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      transition: width 0.5s ease;
+    }
+    
+    .blocking-alert {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #92400e;
+      display: none;
+    }
+    
+    .blocking-alert.show {
+      display: block;
+    }
+    
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 400px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      width: 50px;
+      text-align: center;
+    }
+    
+    .feature-content {
+      flex: 1;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: #3a3a5a;
+      margin-bottom: 5px;
+    }
+    
+    .feature-desc {
+      font-size: 0.9rem;
+      color: #7a7a9a;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+    
+    .blocking-indicator {
+      background: #ef4444;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
     #popup {
       display: none;
       position: fixed;
@@ -93,12 +228,71 @@
     @keyframes popIn {
       from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; }
     }
+    
+    .extension-alert {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-top: 20px;
+      max-width: 450px;
+      font-size: 0.9rem;
+      color: #92400e;
+    }
   </style>
 </head>
 <body>
   <div class="logo">🌸</div>
   <h1>FocusTracker</h1>
-  <div class="subtitle">Your cute productivity buddy is watching out for distractions!</div>
+  <div class="subtitle">Your homework-powered productivity companion - complete assignments to unlock distraction-free browsing!</div>
+  
+  <div class="homework-status" id="homeworkStatus">
+    <div class="status-header">
+      <span class="status-icon" id="statusIcon">⏳</span>
+      <span class="status-title" id="statusTitle">Loading...</span>
+    </div>
+    <div class="status-details" id="statusDetails">Checking homework status...</div>
+    <div class="status-progress">
+      <div class="status-progress-bar" id="progressBar" style="width: 0%;"></div>
+    </div>
+    <div class="blocking-alert" id="blockingAlert">
+      🔒 <strong>Distraction blocking is active!</strong> Complete all assignments to unlock access to YouTube, Instagram, and other distracting sites.
+    </div>
+  </div>
+  
+  <div class="features">
+    <div class="feature-card" data-feature="assignments" onclick="openAssignmentManager()">
+      <div class="feature-icon">📋</div>
+      <div class="feature-content">
+        <div class="feature-title">Assignment Manager</div>
+        <div class="feature-desc">Add and track your homework assignments with due dates</div>
+      </div>
+      <div style="color: #6a4cff; font-weight: 600;">Manage →</div>
+    </div>
+    
+    <div class="feature-card" data-feature="homework" onclick="openHomeworkChecker()">
+      <div class="feature-icon">📚</div>
+      <div class="feature-content">
+        <div class="feature-title">Homework Checker</div>
+        <div class="feature-desc">Upload assignments to verify they're complete before submission</div>
+      </div>
+      <div style="color: #6a4cff; font-weight: 600;">Check →</div>
+    </div>
+    
+    <div class="feature-card" data-feature="distraction">
+      <div class="feature-icon">🚫</div>
+      <div class="feature-content">
+        <div class="feature-title">Smart Distraction Blocker</div>
+        <div class="feature-desc">Automatically blocks distracting sites until homework is complete</div>
+      </div>
+      <div class="status-indicator" id="blockingIndicator"></div>
+    </div>
+  </div>
+  
+  <div class="extension-alert">
+    <strong>💡 Tip:</strong> Install the browser extension for comprehensive distraction blocking across all your Chrome tabs!
+  </div>
+  
   <div id="popup">
     <div id="popup-content">
       <h2>Stay Focused! ✨</h2>
@@ -106,25 +300,402 @@
       <button id="close-btn">I'm back!</button>
     </div>
   </div>
+  
   <script>
     const popup = document.getElementById('popup');
     const closeBtn = document.getElementById('close-btn');
-    window.electronAPI.onDistraction(() => {
-      popup.style.display = 'flex';
-      // Store a flag so we know a distraction is active
-      window.isDistractionActive = true;
-    });
+    let homeworkStatus = null;
+    
+    // Distraction handling
+    if (window.electronAPI) {
+      window.electronAPI.onDistraction(() => {
+        popup.style.display = 'flex';
+        window.isDistractionActive = true;
+      });
+      
+      // Listen for homework status updates
+      window.electronAPI.onHomeworkStatusUpdate((status) => {
+        homeworkStatus = status;
+        updateHomeworkDisplay();
+      });
+    }
+    
     closeBtn.onclick = () => {
       popup.style.display = 'none';
       window.isDistractionActive = false;
-      window.electronAPI.remindAgain();
-      // Send a message to close the tab
-      window.electronAPI.closeDistractionTab && window.electronAPI.closeDistractionTab();
+      if (window.electronAPI) {
+        window.electronAPI.remindAgain();
+        window.electronAPI.closeDistractionTab && window.electronAPI.closeDistractionTab();
+      }
     };
-    // Only show the extension install alert if running in Electron
+    
+    // Feature interactions
+    function openAssignmentManager() {
+      try {
+        if (window.electronAPI) {
+          console.log('Available electronAPI methods:', Object.keys(window.electronAPI));
+          window.electronAPI.openAssignmentManager();
+        } else {
+          console.error('electronAPI not available');
+          alert('Assignment manager requires the desktop app.');
+        }
+      } catch (error) {
+        console.error('Error opening assignment manager:', error);
+        alert('Error opening assignment manager: ' + error.message);
+      }
+    }
+    
+    function openHomeworkChecker() {
+      if (window.electronAPI && window.electronAPI.openHomeworkChecker) {
+        window.electronAPI.openHomeworkChecker();
+      } else {
+        alert('Homework checker functionality requires the desktop app.');
+      }
+    }
+    
+    function updateHomeworkDisplay() {
+      if (!homeworkStatus) return;
+      
+      const statusIcon = document.getElementById('statusIcon');
+      const statusTitle = document.getElementById('statusTitle');
+      const statusDetails = document.getElementById('statusDetails');
+      const progressBar = document.getElementById('progressBar');
+      const blockingAlert = document.getElementById('blockingAlert');
+      const blockingIndicator = document.getElementById('blockingIndicator');
+      const homeworkStatusCard = document.getElementById('homeworkStatus');
+      
+      if (homeworkStatus.isAllComplete) {
+        // All homework complete
+        statusIcon.textContent = '🎉';
+        statusTitle.textContent = 'All Done!';
+        statusTitle.className = 'status-title status-complete';
+        statusDetails.textContent = `Great job! You've completed all ${homeworkStatus.completedCount} assignments.`;
+        progressBar.style.width = '100%';
+        blockingAlert.classList.remove('show');
+        blockingIndicator.classList.remove('blocking-indicator');
+        homeworkStatusCard.style.borderLeft = '4px solid #10b981';
+      } else if (homeworkStatus.totalCount === 0) {
+        // No assignments yet
+        statusIcon.textContent = '📝';
+        statusTitle.textContent = 'Add Your Assignments';
+        statusTitle.className = 'status-title';
+        statusDetails.textContent = 'Start by adding your homework assignments to track your progress.';
+        progressBar.style.width = '0%';
+        blockingAlert.classList.remove('show');
+        blockingIndicator.classList.remove('blocking-indicator');
+        homeworkStatusCard.style.borderLeft = '4px solid #6b7280';
+      } else {
+        // Homework incomplete
+        statusIcon.textContent = '⏳';
+        statusTitle.textContent = 'Homework Pending';
+        statusTitle.className = 'status-title status-incomplete';
+        statusDetails.textContent = `${homeworkStatus.pendingCount} assignments remaining out of ${homeworkStatus.totalCount} total.`;
+        
+        const percentage = homeworkStatus.totalCount > 0 
+          ? (homeworkStatus.completedCount / homeworkStatus.totalCount) * 100 
+          : 0;
+        progressBar.style.width = percentage + '%';
+        
+        blockingAlert.classList.add('show');
+        blockingIndicator.classList.add('blocking-indicator');
+        homeworkStatusCard.style.borderLeft = '4px solid #f59e0b';
+      }
+    }
+    
+    // Add click handlers for feature cards
+    document.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[onclick]')) return; // Skip if has onclick
+        
+        const feature = card.dataset.feature;
+        if (feature === 'distraction') {
+          // Show info about distraction blocking
+          let message = '🚫 Smart Distraction Blocker is active!\n\n';
+          if (homeworkStatus && homeworkStatus.isAllComplete) {
+            message += 'All homework complete! Distraction blocking is relaxed, but still monitoring for your focus.';
+          } else if (homeworkStatus && homeworkStatus.pendingCount > 0) {
+            message += `You have ${homeworkStatus.pendingCount} pending assignments. Distraction blocking is strictly enforced until all homework is complete.`;
+          } else {
+            message += 'Add your assignments to enable smart homework-dependent blocking.';
+          }
+          alert(message);
+        }
+      });
+    });
+    
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Request initial homework status
+      if (window.electronAPI && window.electronAPI.requestHomeworkStatus) {
+        window.electronAPI.requestHomeworkStatus();
+      }
+      
+      // Show extension reminder after 5 seconds
+      setTimeout(() => {
+        const extensionAlert = document.querySelector('.extension-alert');
+        extensionAlert.style.animation = 'pulse 2s infinite';
+      }, 5000);
+    });
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusTracker</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f7f7fa 0%, #e3e9ff 100%);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      transition: background 0.5s;
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #a7bfff 0%, #f7b2ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(100,100,255,0.08);
+      user-select: none;
+    }
+    h1 {
+      color: #3a3a5a;
+      font-weight: 700;
+      margin-bottom: 0.2em;
+      letter-spacing: 0.01em;
+    }
+    .subtitle {
+      color: #7a7a9a;
+      font-size: 1.1rem;
+      margin-bottom: 2.5em;
+      text-align: center;
+      max-width: 400px;
+    }
+    
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 350px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      width: 50px;
+      text-align: center;
+    }
+    
+    .feature-content {
+      flex: 1;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: #3a3a5a;
+      margin-bottom: 5px;
+    }
+    
+    .feature-desc {
+      font-size: 0.9rem;
+      color: #7a7a9a;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    #popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.18);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s;
+    }
+    #popup-content {
+      background: #fff;
+      padding: 2.5rem 3.5rem;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(80,80,180,0.13);
+      text-align: center;
+      min-width: 320px;
+      animation: popIn 0.3s;
+    }
+    #popup-content h2 {
+      color: #6a4cff;
+      margin-bottom: 0.5em;
+      font-size: 2rem;
+    }
+    #popup-content p {
+      color: #444;
+      font-size: 1.1rem;
+      margin-bottom: 1.5em;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.7rem 2.2rem;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #6a4cff 0%, #b86bff 100%);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(106,76,255,0.08);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #b86bff 0%, #6a4cff 100%);
+      box-shadow: 0 4px 16px rgba(106,76,255,0.13);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; }
+    }
+    
+    .extension-alert {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-top: 20px;
+      max-width: 400px;
+      font-size: 0.9rem;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">🌸</div>
+  <h1>FocusTracker</h1>
+  <div class="subtitle">Your complete productivity companion - blocking distractions and checking homework!</div>
+  
+  <div class="features">
+    <div class="feature-card" data-feature="distraction">
+      <div class="feature-icon">🚫</div>
+      <div class="feature-content">
+        <div class="feature-title">Distraction Blocker</div>
+        <div class="feature-desc">Automatically detects and blocks YouTube, Instagram, and other distracting sites</div>
+      </div>
+      <div class="status-indicator"></div>
+    </div>
+    
+    <div class="feature-card" data-feature="homework" onclick="openHomeworkChecker()">
+      <div class="feature-icon">📚</div>
+      <div class="feature-content">
+        <div class="feature-title">Homework Checker</div>
+        <div class="feature-desc">Upload assignments to verify they're complete before submission</div>
+      </div>
+      <div style="color: #6a4cff; font-weight: 600;">Open →</div>
+    </div>
+  </div>
+  
+  <div class="extension-alert">
+    <strong>💡 Tip:</strong> Install the browser extension for better distraction blocking across all your Chrome tabs!
+  </div>
+  
+  <div id="popup">
+    <div id="popup-content">
+      <h2>Stay Focused! ✨</h2>
+      <p>Oops! You might be getting distracted.<br>Close those tabs or apps (YouTube, Instagram, etc.) and get back on track!</p>
+      <button id="close-btn">I'm back!</button>
+    </div>
+  </div>
+  
+  <script>
+    const popup = document.getElementById('popup');
+    const closeBtn = document.getElementById('close-btn');
+    
+    // Distraction handling
+    if (window.electronAPI) {
+      window.electronAPI.onDistraction(() => {
+        popup.style.display = 'flex';
+        window.isDistractionActive = true;
+      });
+    }
+    
+    closeBtn.onclick = () => {
+      popup.style.display = 'none';
+      window.isDistractionActive = false;
+      if (window.electronAPI) {
+        window.electronAPI.remindAgain();
+        window.electronAPI.closeDistractionTab && window.electronAPI.closeDistractionTab();
+      }
+    };
+    
+    // Feature interactions
+    function openHomeworkChecker() {
+      if (window.electronAPI && window.electronAPI.openHomeworkChecker) {
+        window.electronAPI.openHomeworkChecker();
+      } else {
+        alert('Homework checker functionality requires the desktop app.');
+      }
+    }
+    
+    // Add click handlers for feature cards
+    document.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[onclick]')) return; // Skip if has onclick
+        
+        const feature = card.dataset.feature;
+        if (feature === 'distraction') {
+          // Show info about distraction blocking
+          alert('🚫 Distraction Blocker is running!\n\nIt automatically monitors your active windows and browser tabs for distracting sites like YouTube and Instagram. When detected, you\'ll see a focused reminder to get back on track.');
+        }
+      });
+    });
+    
+    // Extension install reminder (only show in Electron)
     if (window.electronAPI) {
       window.addEventListener('DOMContentLoaded', () => {
-        alert('For best results, please install the FocusTracker browser extension.\n\n1. Open Chrome and go to chrome://extensions/\n2. Enable Developer Mode (top right)\n3. Drag and drop the extension folder from your FocusTracker app directory into the page.');
+        // Show extension reminder after 5 seconds
+        setTimeout(() => {
+          const extensionAlert = document.querySelector('.extension-alert');
+          extensionAlert.style.animation = 'pulse 2s infinite';
+        }, 5000);
       });
     }
   </script>
